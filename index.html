@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Leaflet + Navbar + DMZ Zoom + Attribution</title>
+
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Dongle:wght@400;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+  />
+
+  <style>
+    /* 리셋 */
+    html, body { height:100%; margin:0; padding:0; }
+    #map { width:100%; height:100%; }
+
+    /* Navbar */
+    .navbar {
+      position:absolute; top:20px; left:50%;
+      transform:translateX(-50%);
+      width:90%; max-width:1000px; height:55px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px;
+      background:rgba(0,0,0,0.78);
+      box-shadow:4px 4px 16px rgba(0,0,0,0.25);
+      border-radius:30px;
+      backdrop-filter:blur(7.5px);
+      -webkit-backdrop-filter:blur(7.5px);
+      z-index:1000;
+      color:#fff;
+      font-family:'Dongle', sans-serif;
+      font-weight:500;
+    }
+    .navbar__logo { font-size:24px; margin-left:30px; }
+    .navbar__menu {
+      font-size:22px;
+      display:flex; gap:33px;
+      list-style:none; margin-right:30px; padding:0;
+    }
+    .navbar__menu li a {
+      color:#fff; text-decoration:none; transition:color .2s;
+    }
+    .navbar__menu li a:hover { color:#ffcc00; }
+
+    /* 이미지 오버레이: 투명 영역 유지 + 이중 드롭섀도우 + hover 확대 */
+    .leaflet-image-layer.base-popup {
+      object-fit: contain;
+      filter:
+        drop-shadow(0 0 2px #ffffff)
+        drop-shadow(0 0 6px rgba(0,0,0,0.9));
+      transition: transform 0.2s ease-out;
+      transform-origin: center center;
+    }
+    /* 팝업 이미지 */
+    .leaflet-image-layer.hover-popup {
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <nav class="navbar">
+    <div class="navbar__logo">DMZ 생태문화지도 동물편</div>
+    <ul class="navbar__menu">
+  <li><a href="index.html">DMZ</a></li>
+  <li><a href="index.html">지도</a></li>
+  <li><a href="animals index.html">동물카드</a></li>
+</ul>
+  </nav>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    // 1) 지도
+    const map = L.map('map', {
+      scrollWheelZoom: true,
+      doubleClickZoom: false
+    }).setView([38.25, 127.0], 8);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; 국립수목원, 녹색연합'
+    }).addTo(map);
+
+    // helper: add overlay + enable hover zoom
+    function addOverlay(url, bounds) {
+      const ov = L.imageOverlay(url, bounds, {
+        interactive: true,
+        className: 'base-popup',
+        opacity: 1
+      }).addTo(map);
+      const img = ov.getElement();
+      ov.on('mouseover', () => img.style.transform += ' scale(1.2)');
+      ov.on('mouseout',  () => {
+        img.style.transform = img.style.transform.replace(/scale\([0-9.]+\)/, '');
+      });
+      return ov;
+    }
+
+    // 팝업 
+    const animalOverlay = addOverlay('my.png', [[38.210866,128.237279],[38.540866,128.567279]]);
+    const overlay2       = addOverlay('a2.png',   [[38.214392,127.947995],[38.714392,128.177995]]);
+    const overlay3       = addOverlay('a3.png',   [[37.941722,127.675469],[38.441722,128.175469]]);
+    const overlay5       = addOverlay('a5.png',   [[38.251722,127.465469],[38.751722,127.765469]]);
+      const overlay6      = addOverlay('a6.png',   [[37.831722,126.855469],[38.331722,127.155469]]);
+    addOverlay('a4.png', [[37.93,127.20],[38.53,127.60]]);
+    addOverlay('a7.png', [[38.142627,126.8561825],[38.642627,127.1853435]]);
+    addOverlay('a8.png', [[37.821996,127.094484],[38.121996,126.134484]]);
+    addOverlay('a9.png', [[37.479949,126.359161],[37.929949,126.899161]]);
+
+    // 3) popup1 (산양)
+    const popup1Bounds = [[37.590, 128.128],[38.360, 129.052]];
+    let hoverOverlay1 = null;
+    animalOverlay.on('mouseover', () => {
+      if (hoverOverlay1) map.removeLayer(hoverOverlay1);
+      hoverOverlay1 = L.imageOverlay('popup1.png', popup1Bounds, {
+        className:'hover-popup', interactive:false, opacity:1
+      }).addTo(map);
+    });
+    animalOverlay.on('mouseout', () => {
+      if (hoverOverlay1) { map.removeLayer(hoverOverlay1); hoverOverlay1 = null; }
+    });
+
+    // 4) popup2 (수리부엉이)
+    const popup2Bounds = [[38.504392,127.452995],[39.204392,128.292995]];
+    let hoverOverlay2 = null;
+    overlay2.on('mouseover', () => {
+      if (hoverOverlay2) map.removeLayer(hoverOverlay2);
+      hoverOverlay2 = L.imageOverlay('popup2.png', popup2Bounds, {
+        className:'hover-popup', interactive:false, opacity:1
+      }).addTo(map);
+    });
+    overlay2.on('mouseout', () => {
+      if (hoverOverlay2) { map.removeLayer(hoverOverlay2); hoverOverlay2 = null; }
+    });
+
+    // 5) popup3 (담비)
+    const popup3Bounds = [[37.481722,127.545469],[38.181722,128.385469]];
+    let hoverOverlay3 = null;
+    overlay3.on('mouseover', () => {
+      if (hoverOverlay3) map.removeLayer(hoverOverlay3);
+      hoverOverlay3 = L.imageOverlay('popup3.png', popup3Bounds, {
+        className:'hover-popup', interactive:false, opacity:1
+      }).addTo(map);
+    });
+    overlay3.on('mouseout', () => {
+      if (hoverOverlay3) { map.removeLayer(hoverOverlay3); hoverOverlay3 = null; }
+    });
+
+    // 6) 지도 클릭하면 확대
+    map.on('click', e => map.flyTo(e.latlng, 10, { duration:1.5 }));
+
+    // 7) DMZ Zoom 버튼
+    const dmzBtn = L.control({ position: 'topright' });
+    dmzBtn.onAdd = () => {
+      const c = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      const b = L.DomUtil.create('a', '', c);
+      b.innerText = 'DMZ Zoom';
+      b.href = '#';
+      b.style.padding = '6px';
+      b.style.background = 'rgba(255,255,255,0.8)';
+      b.style.color = '#000';
+      L.DomEvent.disableClickPropagation(c);
+      L.DomEvent.disableScrollPropagation(c);
+      L.DomEvent.on(b, 'click', e => {
+        L.DomEvent.stop(e);
+        map.flyTo([38.247, 127.265], 9.1, { duration:1.2 });
+      });
+      return c;
+    };
+    dmzBtn.addTo(map);
+  </script>
+</body>
+</html>
